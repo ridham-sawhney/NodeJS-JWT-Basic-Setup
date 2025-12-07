@@ -28,19 +28,19 @@ const handleLogin = async (req, res) => {
                 }
             },
             process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: '60s' }
+            { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRY }
         );  
         const refreshToken = jwt.sign(
             { "username": user.username },
             process.env.REFRESH_TOKEN_SECRET,
-            { expiresIn: '1d' }
+            { expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRY }
         );
         res.cookie(COOKIES.JWT_REFRESH_TOKEN, refreshToken, {
             httpOnly: true,
             secure: true,
             sameSite: 'None',
             // maxAge: 30 * 1000
-            maxAge: 24 * 60 * 60 * 1000
+            maxAge: process.env.JWT_REFRESH_TOKEN_EXPIRY_MS
         });
         user.refreshToken = refreshToken;
         const savedUser = await user.save();

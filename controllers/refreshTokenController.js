@@ -28,7 +28,7 @@ const handleRefreshToken = async (req, res) => {
                         }
                     },
                     process.env.ACCESS_TOKEN_SECRET,
-                    { expiresIn: '60s' }
+                    { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRY }
                 );
 
                 //Also update the value of refresh token in the DB and cookie without changing its expiry time
