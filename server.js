@@ -33,7 +33,9 @@ app.get('/test', (req, res) => {
 
 app.use('/register', require('./routes/register'));
 app.use('/login', require('./routes/login'));
+app.use('/logout', require('./routes/logout'));
 app.use('/refreshToken', require('./routes/refreshToken'));
+app.use('/api/auth/google', require('./routes/googleAuth'));
 
 
 // Restricted routes can be added here using verifyJWT middleware

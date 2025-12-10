@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { COOKIES } = require('../constants/Cookies');
+const {createAccessToken,createRefreshToken}  = require(".././Utils/TokenCreator");
+const {createRefreshTokenCookie} = require(".././Utils/CookieHandler");
 
 const handleRefreshToken = async (req, res) => {
     const cookies = req.cookies;
@@ -17,41 +19,34 @@ const handleRefreshToken = async (req, res) => {
             refreshToken,
             process.env.REFRESH_TOKEN_SECRET,
             async (err, decoded) => {
-                if (err || foundUser.username !== decoded.username) {
+                if (err || foundUser.email !== decoded.email) {
                     return res.status(403).json({ responseCode: "FORBIDDEN", message: 'Forbidden' });
                 }
-                const accessToken = jwt.sign(
-                    {
-                        "UserInfo": {
-                            "username": foundUser.username,
-                            "roles": foundUser.roles
-                        }
-                    },
-                    process.env.ACCESS_TOKEN_SECRET,
-                    { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRY }
-                );
+                const accessToken = createAccessToken({email:foundUser.email,roles:foundUser.roles});
 
                 //Also update the value of refresh token in the DB and cookie without changing its expiry time
                 const expiryTime = decoded.exp;
                 const now = Math.floor(Date.now() / 1000);
                 const remainingTime = expiryTime - now;
 
-                const newRefreshToken = jwt.sign(
-                    { "username": foundUser.username },
-                    process.env.REFRESH_TOKEN_SECRET,
-                    { expiresIn: remainingTime }
-                );
-                res.cookie(COOKIES.JWT_REFRESH_TOKEN, newRefreshToken, {
-                    httpOnly: true,
-                    secure: true,
-                    sameSite: 'None',
-                    maxAge: remainingTime * 1000
-                });
+
+                const newRefreshToken = createRefreshToken({email:foundUser.email,remainingTime:remainingTime});
+
+                createRefreshTokenCookie({response:res,refreshToken:newRefreshToken,remainingTime:remainingTime*1000});
+                // res.cookie(COOKIES.JWT_REFRESH_TOKEN, newRefreshToken, {
+                //     httpOnly: true,
+                //     // secure: true,
+                //     // sameSite: 'None',
+                //     secure: false,
+                //     sameSite: 'lax',
+                //     path: '/',
+                //     maxAge: remainingTime * 1000
+                // });
                 foundUser.refreshToken = newRefreshToken;
                 await foundUser.save();
 
 
-                res.json({ responseCode: "TOKEN_REFRESHED_SUCCESSFULLY", [COOKIES.JWT_ACCESS_TOKEN]: accessToken });
+                res.json({ responseCode: "TOKEN_REFRESHED_SUCCESSFULLY",email:foundUser.email,roles:foundUser.roles, [COOKIES.JWT_ACCESS_TOKEN]: accessToken });
             }
         );
     } catch (err) {
