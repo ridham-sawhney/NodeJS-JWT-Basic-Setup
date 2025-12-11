@@ -37,15 +37,13 @@ app.use('/logout', require('./routes/logout'));
 app.use('/refreshToken', require('./routes/refreshToken'));
 app.use('/api/auth/google', require('./routes/googleAuth'));
 
+//Since there are some public routes , jwt verification will be done inside router
+app.use('/users',require('./routes/apis/users'));
 
 // Restricted routes can be added here using verifyJWT middleware
 app.use(veryfyJWT);
-
 app.use('/shipments',require('./routes/apis/shipments'));
 
-app.get('/restricted',(req,res)=>{
-    res.json({message:"You have accessed a restricted route",user:req.user});
-})
 
 app.use(errorHandler);
 mongoose.connection.once('open', () => {

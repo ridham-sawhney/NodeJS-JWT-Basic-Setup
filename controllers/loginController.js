@@ -17,6 +17,9 @@ const handleLogin = async (req, res) => {
         if (!user) {
             return res.status(401).json({responseCode:"INVALID_CREDENTIALS", message: 'Invalid credentials' });
         }
+        if (!user.password) {
+            return res.status(401).json({responseCode:"USER_NOT_REGISTERED", message: 'User not registered.' });
+        }
         const match = await bcrypt.compare(password, user.password);
         if (!match) {
             return res.status(401).json({responseCode:"INVALID_CREDENTIALS", message: 'Invalid credentials' });
@@ -28,7 +31,15 @@ const handleLogin = async (req, res) => {
 
         user.refreshToken = refreshToken;
         const savedUser = await user.save();
-        res.json({responseCode:"LOGIN_SUCCESSFUL",email:user.email,[COOKIES.JWT_ACCESS_TOKEN] :accessToken,roles });
+        res.json({
+            responseCode:"LOGIN_SUCCESSFUL",
+            email:user.email,
+            name:user.name,
+            picture:user.pictureURL,
+            isGoogleVerified:user.isGoogleVerified,
+            isRegisteredUser:user.isRegisteredUser,
+            [COOKIES.JWT_ACCESS_TOKEN] :accessToken,
+            roles });
     } catch (err) {
         console.error(err);
         res.status(500).json({ responseCode:"SERVER_ERROR",message: 'Server error' });
